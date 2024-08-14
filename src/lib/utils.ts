@@ -2,7 +2,6 @@
  * SAIDifies arbitrary data passed in as a map (Dict) object.
  * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
  *
- *
  * @example
  *
  * ```ts
@@ -16,9 +15,9 @@
  * ```
  */
 export interface Dict<T> {
-  [id: string]: T;
+  [id: string]: T
 }
 
 export const saidify = (sad: Dict<any>, label: string = `d`): string => {
-  return `${JSON.stringify(sad)}-${label}`;
+  return `${JSON.stringify(sad)}-${label}`
 }

@@ -40,11 +40,11 @@ Features:
 1. Base `tsconfig.json` shared across `tests` and `src`.
 1. Optimal output setup for your users
 
-    1. [`declaration`](https://www.typescriptlang.org/tsconfig#declaration) so your users can power their intellisense with your packages typings.
-    1. [`declarationMap`](https://www.typescriptlang.org/tsconfig#declarationMap) enabled to make your published source code be navigated to when your users use "go to definition".
-    1. `package.json` [`typeVersions`](https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html#version-selection-with-typesversions) used to emit only **one** set of declaration files shared by both CJS and ESM builds.
-    1. [`sourceMap`](https://www.typescriptlang.org/tsconfig#sourceMap) enabled to allow your users' tools to base off the source for e.g. stack traces instead of the less informative derived built JS.
-    1. Publish `src` with build files so that jump-to-definition tools work optimally for users.
+   1. [`declaration`](https://www.typescriptlang.org/tsconfig#declaration) so your users can power their intellisense with your packages typings.
+   1. [`declarationMap`](https://www.typescriptlang.org/tsconfig#declarationMap) enabled to make your published source code be navigated to when your users use "go to definition".
+   1. `package.json` [`typeVersions`](https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html#version-selection-with-typesversions) used to emit only **one** set of declaration files shared by both CJS and ESM builds.
+   1. [`sourceMap`](https://www.typescriptlang.org/tsconfig#sourceMap) enabled to allow your users' tools to base off the source for e.g. stack traces instead of the less informative derived built JS.
+   1. Publish `src` with build files so that jump-to-definition tools work optimally for users.
 
 1. `tsx` for running TypeScript scripts/modules.
 
@@ -87,13 +87,13 @@ Just Works :)
 1. Separate trunk and pull-request (PR) workflows.
 1. [Dependency install cache](https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md#caching-packages-dependencies) enabled.
 1. On PR:
-    1. Formatting Check
-    1. Lint Check
-    1. Type Check
-    1. Tests across matrix of mac/linux/windows for Node 14/16
+   1. Formatting Check
+   1. Lint Check
+   1. Type Check
+   1. Tests across matrix of mac/linux/windows for Node 14/16
 1. On trunk:
-    1. Tests across matrix of mac/linux/windows for Node 14/16
-    1. Automated canary release
+   1. Tests across matrix of mac/linux/windows for Node 14/16
+   1. Automated canary release
 
 #### [Renovate](https://github.com/renovatebot/renovate) configuration
 
