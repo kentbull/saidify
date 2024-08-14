@@ -1,0 +1,73 @@
+{
+  "name": "template-typescript-lib",
+  "version": "0.0.0-dripip",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jasonkuhrt/template-typescript-lib.git"
+  },
+  "author": "Jason Kuhrt",
+  "packageManager": "pnpm@8.10.4",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "src",
+    "build"
+  ],
+  "types": "./build/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./build/cjs/index.d.ts",
+        "default": "./build/cjs/index.js"
+      },
+      "import": {
+        "types": "./build/esm/index.d.ts",
+        "default": "./build/esm/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "build:toc": "markdown-toc README.md -i --maxdepth 4 && dprint fmt README.md",
+    "format": "dprint fmt",
+    "lint": "eslint . --fix",
+    "dev": "pnpm clean && tsc --build --watch tsconfig.cjs.json tsconfig.esm.json",
+    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm",
+    "build:cjs": "tsc --project tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > build/cjs/package.json",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "clean": "tsc --build --clean && rm -rf build",
+    "test": "vitest",
+    "prepack": "pnpm build",
+    "check": "pnpm check:format && pnpm check:lint && pnpm check:types && pnpm check:publint",
+    "check:format": "dprint check",
+    "check:lint": "eslint . --max-warnings 0",
+    "check:types": "tsc --noEmit",
+    "check:publint": "publint run --strict"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "18.2.4",
+    "@tsconfig/recommended": "1.0.7",
+    "@tsconfig/strictest": "2.0.5",
+    "@types/inquirer": "9.0.7",
+    "@types/node": "22.1.0",
+    "@typescript-eslint/eslint-plugin": "8.0.0",
+    "@typescript-eslint/parser": "8.0.0",
+    "dripip": "0.10.0",
+    "eslint": "9.8.0",
+    "eslint-config-prisma": "0.6.0",
+    "eslint-plugin-deprecation": "3.0.0",
+    "eslint-plugin-only-warn": "1.1.0",
+    "eslint-plugin-prefer-arrow": "1.2.3",
+    "eslint-plugin-tsdoc": "0.3.0",
+    "execa": "9.3.0",
+    "fast-glob": "3.3.2",
+    "floggy": "0.3.5",
+    "fs-jetpack": "5.1.0",
+    "inquirer": "9.3.6",
+    "markdown-toc": "1.2.0",
+    "publint": "^0.2.9",
+    "tsx": "4.16.5",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5"
+  }
+}
