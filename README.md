@@ -1,6 +1,6 @@
-# template-typescript-lib
+# saidify
 
-[![trunk](https://github.com/jasonkuhrt/template-typescript-lib/actions/workflows/trunk.yaml/badge.svg)](https://github.com/jasonkuhrt/template-typescript-lib/actions/workflows/trunk.yaml)
+[![trunk](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml/badge.svg)](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml)
 
 Project template for Node libraries. Features:
 
@@ -29,7 +29,7 @@ The following will get you a ready to go new repository on GitHub based on this 
 1. Run:
 
    ```
-   gh repo create foobar --template jasonkuhrt/template-typescript-lib --clone --public && \
+   gh repo create foobar --template kentbull/saidify --clone --public && \
    cd foobar && \
    pnpm install && \
    pnpm bootstrap
@@ -44,7 +44,7 @@ The following will get you a ready to go new repository on GitHub based on this 
 1. Run:
 
    ```
-   gh repo clone jasonkuhrt/template-typescript-lib <directory> && \
+   gh repo clone kentbull/saidify <directory> && \
    cd <directory> && \
    pnpm install && \
    pnpm bootstrap
