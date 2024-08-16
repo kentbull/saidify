@@ -1,7 +1,7 @@
 {
   "extends": [
     "@tsconfig/strictest/tsconfig.json",
-    "@tsconfig/node18/tsconfig.json"
+    "@tsconfig/node22/tsconfig.json"
   ],
   "compilerOptions": {
     // Use ESM
@@ -20,8 +20,8 @@
     "tsBuildInfoFile": "node_modules/.cache/.tsbuildinfo",
     "noErrorTruncation": true,
     "skipLibCheck": true
-    //    "verbatimModuleSyntax": true TODO figure out how to get this working
+    // "verbatimModuleSyntax": true TODO enable when supported
   },
-  "include": ["src", "tests", "scripts"],
+  "include": ["src", "tests", "scripts", "types.d.ts"],
   "exclude": ["build"]
 }

@@ -1,6 +1,6 @@
 {
   "name": "saidify",
-  "version": "0.0.1-dripip",
+  "version": "0.0.1",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/kentbull/saidify.git"
@@ -43,28 +43,33 @@
     "check:types": "tsc --noEmit",
     "check:publint": "publint run --strict"
   },
+  "dependencies": {
+    "@noble/hashes": "^1.4.0",
+    "cbor": "^9.0.2",
+    "msgpack5": "^6.0.2"
+  },
   "devDependencies": {
-    "@tsconfig/node18": "18.2.4",
+    "@tsconfig/node22": "22.0.0",
     "@tsconfig/recommended": "1.0.7",
     "@tsconfig/strictest": "2.0.5",
+    "@types/eslint__js": "^8.42.3",
     "@types/inquirer": "9.0.7",
-    "@types/node": "22.1.0",
-    "@typescript-eslint/eslint-plugin": "8.0.0",
-    "@typescript-eslint/parser": "8.0.0",
+    "@types/msgpack5": "^3.4.6",
+    "@types/node": "22.4.0",
+    "@typescript-eslint/eslint-plugin": "8.1.0",
+    "@typescript-eslint/parser": "8.1.0",
     "dripip": "0.10.0",
-    "eslint": "9.8.0",
-    "eslint-config-prisma": "0.6.0",
-    "eslint-plugin-deprecation": "3.0.0",
+    "eslint": "8.57.0",
     "eslint-plugin-only-warn": "1.1.0",
-    "eslint-plugin-prefer-arrow": "1.2.3",
     "eslint-plugin-tsdoc": "0.3.0",
-    "execa": "9.3.0",
+    "execa": "9.3.1",
     "fast-glob": "3.3.2",
     "fs-jetpack": "5.1.0",
     "markdown-toc": "1.2.0",
-    "publint": "^0.2.9",
-    "tsx": "4.16.5",
+    "publint": "^0.2.10",
+    "tsx": "4.17.0",
     "typescript": "5.5.4",
+    "typescript-eslint": "^8.1.0",
     "vitest": "2.0.5"
   }
 }
