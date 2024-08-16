@@ -1,13 +1,13 @@
 {
   "name": "saidify",
-  "version": "0.0.0-dripip",
+  "version": "0.0.1-dripip",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/kentbull/saidify.git"
   },
-  "author": "Jason Kuhrt",
+  "author": "Kent Bull",
   "packageManager": "pnpm@8.10.4",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "files": [
     "src",

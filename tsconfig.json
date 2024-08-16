@@ -19,8 +19,8 @@
     "incremental": true,
     "tsBuildInfoFile": "node_modules/.cache/.tsbuildinfo",
     "noErrorTruncation": true,
-    "skipLibCheck": true,
-    "verbatimModuleSyntax": true
+    "skipLibCheck": true
+    //    "verbatimModuleSyntax": true TODO figure out how to get this working
   },
   "include": ["src", "tests", "scripts"],
   "exclude": ["build"]
