@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@noble/hashes": "^1.4.0",
+    "buffer": "^6.0.3",
     "cbor": "^9.0.2",
     "msgpack5": "^6.0.2"
   },
