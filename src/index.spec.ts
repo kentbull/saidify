@@ -1,22 +1,40 @@
-import {expect, test} from 'vitest'
+import { expect, test } from 'vitest'
 import * as Lib from './index.js'
-import {qb64b, rawSize, SAIDDex, Serials, validateRawSize} from './index.js'
-import {fromBytes} from "./lib/encoding.js";
+import { SAIDDex, Serials } from './index.js'
 
-test(`saidify produces a qb64`, () => {
-  const sad = {
+test(`saidify Blake3-256 of JSON produces a valid said`, () => {
+  const data = {
     d: ``,
     attr1: `value1`,
     attr2: `value2`,
     attr3: `value3`,
   }
+  const code = SAIDDex.Blake3_256
+  const kind = Serials.JSON
   const label = `d`
 
-  const code = SAIDDex.Blake3_256;
-  const [raw, _data] = Lib.saidify(sad, code, Serials.JSON, label);
-  const size = rawSize(code);
-  validateRawSize(raw, code); // TODO move this to a qb64 generation/encoding function
-  const saidQb64 = fromBytes(qb64b(raw, code, size));
-  // TODO implement Matter._infil in order to verify the output
-  expect(saidQb64).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
+  // TODO read rest of Saider.verify to see if I need anything else from it for SAID verification.
+
+  const saidDataOnly = Lib.saidify(data)
+  expect(saidDataOnly).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
+
+  const saidDataCode = Lib.saidify(data, code)
+  expect(saidDataCode).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
+
+  const saidDataCodeKind = Lib.saidify(data, code, kind)
+  expect(saidDataCodeKind).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
+
+  const saidAllArgs = Lib.saidify(data, code, kind, label)
+  expect(saidAllArgs).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
+})
+
+test(`example code test`, () => {
+  const data = {
+    a: 1,
+    b: 2,
+    d: '',
+  }
+  const label = 'd'
+  const said = Lib.saidify(data, SAIDDex.Blake3_256, Serials.JSON, label)
+  expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
 })

@@ -1,4 +1,5 @@
-import { Buffer } from 'buffer';
+import { Buffer } from 'buffer'
+// ** borrowed from SignifyTS **
 // base64url is supported by node Buffer, but not in buffer package for browser compatibility
 // https://github.com/feross/buffer/issues/309
 
@@ -7,17 +8,17 @@ import { Buffer } from 'buffer';
 
 /**
  * Encodes a buffer to a Base64URLSafe string
- * @param buffer
+ * @param buffer - the buffer to Base64URLSafe encode
  */
 export function encodeBase64Url(buffer: Buffer) {
   if (!Buffer.isBuffer(buffer)) {
-    throw new TypeError('`buffer` must be a buffer.');
+    throw new TypeError('`buffer` must be a buffer.')
   }
   return buffer
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
-    .replace(/=+/, '');
+    .replace(/=+/, '')
 }
 
 /**
@@ -137,6 +138,3 @@ export function intToB64(i: number, l = 1): string {
 
   return out
 }
-
-
-

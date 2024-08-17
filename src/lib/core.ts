@@ -1,9 +1,11 @@
 import * as cbor from 'cbor'
 import msgpack5 from 'msgpack5'
+import { encodeBase64Url } from './base64.js'
+import { Sizes } from './code-tables.js'
+import { Dict } from './data-structures.js'
 import { DigestAlgoMap, SAIDDex } from './digests.js'
-import { toBytes } from './encoding.js'
+import { fromBytes, toBytes } from './encoding.js'
 import { deversify, versify, Version } from './versions.js'
-import {encodeBase64Url} from "./base64.js";
 
 /**
  * Serialization types for the version field 'v'
@@ -20,66 +22,6 @@ export enum Serials {
 export enum Protocols {
   KERI = `KERI`,
   ACDC = `ACDC`,
-}
-
-/**
- * Describes the various sizes of encoded cryptographic primitives including character and byte counts.
- * SAIDs are the only cryptographic primitive in this library. These code counts are used for what is
- * called the fully-qualified forms of an encoded SAID. This includes:
- * - The fully qualified Base64 form (qb64)
- * - The fully qualified Base2 (binary - qb2) form
- */
-export interface CodeCounts {
-  /**
-   * Hard Size (hs) - character count of fixed part of code size
-   */
-  hs: number
-  /**
-   * Soft Size (ss) - character count of variable part of code size
-   */
-  ss: number
-  /**
-   * Lead Size (ls) - byte count of pre-padded, raw binary zero bytes.
-   */
-  ls: number
-  /**
-   * Full Size (fs) - character count of the concatenation of the fixed (hard), variable (soft), and value parts of an
-   * encoded primitive.
-   * Will be -1 for variable size codes to indicate that the size is not fixed.
-   *
-   * fs = hs + ss + vs
-   */
-  fs: number
-}
-
-/**
- * An entry in the sizes table describing derivation code character and byte counts.
- */
-export class Sizeage implements CodeCounts {
-  constructor(
-    public hs: number,
-    public ss: number,
-    public ls: number,
-    public fs: number,
-  ) {}
-}
-
-/**
- * Valid size codes for SAID derivations keyed by derivation code letter.
- */
-export const Sizes = new Map(
-  Object.entries({
-    E: new Sizeage(1, 0, 44, 0), // Blake3 256 bit digest self-addressing derivation.
-    H: new Sizeage(1, 0, 44, 0), // SHA3 256 bit digest self-addressing derivation.
-    I: new Sizeage(1, 0, 44, 0), // SHA2 256 bit digest self-addressing derivation.
-  }),
-)
-
-/**
- * A dictionary object with string keys and any value type.
- */
-export interface Dict<T> {
-  [id: string]: T
 }
 
 /**
@@ -155,7 +97,7 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
 }
 
 /**
- * SAIDifies arbitrary data passed in as a map (Dict) object.
+ * Derives the raw SAID bytes from arbitrary data passed in as a field map object (Dict).
  * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
  *
  * @example
@@ -164,9 +106,10 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  *   const myData = {
  *     a: 1,
  *     b: 2,
+ *     d: ''
  *   }
  *   const label = 'd';
- *   const said = saidify(myData, label);
+ *   const said = deriveSAIDBytes(myData, label);
  *   console.log(said); // ELOaxFqMsS9NFeJiDpKTb3X-xJahjNbh13QoBPnSxMWV TODO update this with the correct SAID
  * ```
  *
@@ -175,7 +118,7 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  * @param kind - type of serialization to use
  * @param label - name of the property in the "data" field that will have the SAID placed inside
  */
-export function saidify(
+export function deriveSAIDBytes(
   data: Dict<any>,
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
@@ -208,50 +151,63 @@ export function saidify(
     args.push(digestage.length)
   }
 
-  return [digestage.fn(ser, ...args), data]
+  const raw = digestage.fn(ser, ...args)
+  validateRawSize(raw, code)
+
+  return [raw, data]
 }
 
 /**
  * Create a fully qualified Base64 representation of the raw bytes encoded as bytes.
- * This implementation only uses the hard part of the code as SAIDS do not have a variable part (soft size).
+ * This implementation only uses the hard part of the code as SAIDs do not have a variable part (soft size).
+ *
+ * Analogous to the Matter._infil() function from KERIpy
  *
  * @param raw - the raw bytes to encode
  * @param code - the algorithm derivation code to use
- * @param size - the expected size of the raw bytes
  */
-export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256, size: number): Uint8Array {
+export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256): Uint8Array {
   const sizeage = Sizes.get(code)
   if (sizeage === undefined) {
     throw new Error(`Unsupported digest algorithm code = ${code}`)
   }
-  const [hs, ss, fs, ls] = [sizeage.hs, sizeage.ss, sizeage.fs, sizeage.ls];
-  const cs = hs + ss;
-  const rs = raw.length;
-  const ps = (3 - ((rs + ls) % 3)) % 3; // net pad size given raw size and lead size
+  const [hs, ss, _fs, ls] = [sizeage.hs, sizeage.ss, sizeage.fs, sizeage.ls]
+  const cs = hs + ss
+  const rs = raw.length
+  const ps = (3 - ((rs + ls) % 3)) % 3 // net pad size given raw size and lead size
   // net pad size must equal both code size remainder so that primitive both + converted padded raw is fs long.
   // Assumes ls in (0, 1, 2) and cs % 4 != 3, fs % 4 == 0. Sizes table must ensure these properties.
   // Even still, following check is a good idea.
-  if (cs % 4 !== ps - sizeage.ls){
-    throw new Error(`Invalid code size for ${code} and raw pad size ${ps} given raw length ${rs}`);
+  if (cs % 4 !== ps - sizeage.ls) {
+    throw new Error(`Invalid code size for ${code} and raw pad size ${ps} given raw length ${rs}`)
   }
 
   // Prepad raw so we midpad the full primitive. Prepadding with ps+ls zero bytes ensures encodeB64 of
   // prepad+lead+raw has no trailing pad characters. Finally skip first ps == cs % 4 of the converted characters
   // to ensure that when full code is prepended the full primitive size is fs but midpad bits are zeros.
-  const prepad = new Uint8Array(ps + ls);
-  const combined = new Uint8Array(prepad.length + raw.length);
+  const prepad = new Uint8Array(ps + ls)
+  const combined = new Uint8Array(prepad.length + raw.length)
 
   // fill out prepad
   // when fixed and ls != 0 then cs % 4 is zero and ps === ls
   // otherwise fixed and ls === 0 then cs % 4 === ps
   for (let i = 0; i < ps; i++) {
-    prepad[i] = 0;
+    prepad[i] = 0
   }
-  combined.set(prepad);
+  combined.set(prepad)
   // adjust the bytes considering padding
-  combined.set(raw, prepad.length);
+  combined.set(raw, prepad.length)
 
-  return toBytes(code + encodeBase64Url(Buffer.from(combined)).slice(ps));
+  return toBytes(code + encodeBase64Url(Buffer.from(combined)).slice(ps))
+}
+
+/**
+ * Create a fully qualified Base64 representation of the raw bytes encoded as a UTF-8 string.
+ * @param raw - the raw bytes to encode
+ * @param code - the algorithm derivation code to use
+ */
+export function qb64(raw: Uint8Array, code: string = SAIDDex.Blake3_256): string {
+  return fromBytes(qb64b(raw, code))
 }
 
 /**
@@ -261,25 +217,27 @@ export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256, size: 
  * @param code - the algorithm derivation code to calculate the raw size for
  */
 export function rawSize(code: string = SAIDDex.Blake3_256): number {
-  if(code.length === 0) {
+  if (code.length === 0) {
     throw new Error('Invalid code, cannot calculate size.')
   }
-  const sizeage = Sizes.get(code);
+  const sizeage = Sizes.get(code)
 
-  if(sizeage === undefined) {
+  if (sizeage === undefined) {
     throw new Error(`Unsupported digest algorithm code = ${code}`)
   }
-  if(sizeage.fs === -1) {
+  if (sizeage.fs === -1) {
     throw new Error(`Unsupported variable size code=${code}`)
   }
 
-  const cs = sizeage.hs + sizeage.ss; // code size
+  const cs = sizeage.hs + sizeage.ss // code size
+  const b64Size = sizeage.fs - cs // Strip the code size from the full size to get the Base64 size
 
   // converts a Base64-encoded size back to the original byte size
+  // each Base64 character is 6 bits so the original size can be found by multiplying the
+  // Base64 length by 6/8 or the equivalent fraction, 3/4, as below
   // rize = raw size in bytes
-  const rize = Math.floor(((sizeage.fs - cs) * 3) / 4)
-    - sizeage.ls; // subtracting the lead pad bytes size (ls)
-  return rize;
+  return Math.floor(b64Size * (3 / 4))
+    - sizeage.ls // subtracting the lead pad bytes size (ls)
 }
 
 /**
@@ -288,11 +246,45 @@ export function rawSize(code: string = SAIDDex.Blake3_256): number {
  * @param code - derivation code algorithm to check the size against
  */
 export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_256) {
-  const rize = rawSize(code);
+  const rize = rawSize(code)
   raw = raw.slice(0, rize)
   if (raw.length != rize) {
     throw new Error(
-      `Not enough raw bytes for code ${code}. Expected ${rize} got ${raw.length}.`
-    );
+      `Not enough raw bytes for code ${code}. Expected ${rize} got ${raw.length}.`,
+    )
   }
+}
+
+/**
+ * SAIDifies arbitrary data passed in as a map (Dict) object.
+ * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
+ * Defaults to using Blake3-256 as the derivation algorithm and JSON as the serialization kind.
+ *
+ * @example
+ *
+ * ```ts
+ *   const myData = {
+ *     a: 1,
+ *     b: 2,
+ *     d: ''
+ *   }
+ *   const label = 'd';
+ *   const said = deriveSAIDBytes(myData, label);
+ *   console.log(said);
+ *   expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz');
+ * ```
+ *
+ * @param data - data to derive self-addressing data from and to add to as a prop labeled by `label`
+ * @param code - algorithm to be used to derive the SAID
+ * @param kind - type of serialization to use
+ * @param label - name of the property in the "data" field that will have the SAID placed inside
+ */
+export function saidify(
+  data: Dict<any>,
+  code: string = SAIDDex.Blake3_256,
+  kind: Serials = Serials.JSON,
+  label: string = 'd',
+): string {
+  const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
+  return qb64(raw, code)
 }
