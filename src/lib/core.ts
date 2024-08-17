@@ -286,5 +286,6 @@ export function saidify(
   label: string = 'd',
 ): string {
   const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
+  // TODO read rest of Saider.verify to see if I need anything else from it for SAID verification.
   return qb64(raw, code)
 }
