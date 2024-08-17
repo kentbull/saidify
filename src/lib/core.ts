@@ -1,8 +1,11 @@
 import * as cbor from 'cbor'
 import msgpack5 from 'msgpack5'
-import { b64ToInt, intToB64 } from './base64.js'
+import { encodeBase64Url } from './base64.js'
+import { Sizes } from './code-tables.js'
+import { Dict } from './data-structures.js'
 import { DigestAlgoMap, SAIDDex } from './digests.js'
-import { intToHex, toBytes } from './encoding.js'
+import { fromBytes, toBytes } from './encoding.js'
+import { deversify, versify, Version } from './versions.js'
 
 /**
  * Serialization types for the version field 'v'
@@ -19,253 +22,6 @@ export enum Serials {
 export enum Protocols {
   KERI = `KERI`,
   ACDC = `ACDC`,
-}
-
-/**
- * A version object with major and minor version numbers.
- */
-export interface Versionage {
-  major: number
-  minor: number
-}
-
-/**
- * KERI Protocol version object with major and minor version numbers.
- */
-export class Version implements Versionage {
-  constructor(public major: number = 1, public minor: number = 0) {}
-}
-export const Vrsn_1_0 = new Version(1, 0)
-export const Vrsn_2_0 = new Version(2, 0)
-
-/**
- * Describes the various sizes of encoded cryptographic primitives including character and byte counts.
- * SAIDs are the only cryptographic primitive in this library. These code counts are used for what is
- * called the fully-qualified forms of an encoded SAID. This includes:
- * - The fully qualified Base64 form (qb64)
- * - The fully qualified Base2 (binary - qb2) form
- */
-export interface CodeCounts {
-  /**
-   * Hard Size (hs) - character count of fixed part of code size
-   */
-  hs: number
-  /**
-   * Soft Size (ss) - character count of variable part of code size
-   */
-  ss: number
-  /**
-   * Lead Size (ls) - byte count of pre-padded, raw binary zero bytes.
-   */
-  ls: number
-  /**
-   * Full Size (fs) - character count of the concatenation of the fixed (hard), variable (soft), and value parts of an
-   * encoded primitive.
-   * fs = hs + ss + vs
-   */
-  fs: number
-}
-
-/**
- * An entry in the sizes table describing derivation code character and byte counts.
- */
-export class Sizeage implements CodeCounts {
-  constructor(
-    public hs: number,
-    public ss: number,
-    public ls: number,
-    public fs: number,
-  ) {}
-}
-
-export const Sizes = new Map(
-  Object.entries({
-    E: new Sizeage(1, 0, 44, 0),
-    H: new Sizeage(1, 0, 44, 0),
-    I: new Sizeage(1, 0, 44, 0),
-  }),
-)
-
-export interface Dict<T> {
-  [id: string]: T
-}
-
-// Version string in JSON, CBOR, or MGPK field map serialization version 1
-export const VER1FULLSPAN = 17 // number of characters in full version string
-export const VER1TERM = `_`
-export const VEREX1 = /([A-Z]{4})([0-9a-f])([0-9a-f])([A-Z]{4})([0-9a-f]{6})_/
-
-// Version string in JSON, CBOR, or MGPK field map serialization version 2
-export const VER2FULLSPAN = 16 // number of characters in full version string
-export const VER2TERM = `.`
-export const VEREX2 = /([A-Z]{4})([0-9A-Za-z_-])([0-9A-Za-z_-]{2})([A-Z]{4})([0-9A-Za-z_-]{4})\./
-
-// Combined regular expression
-export const VEREX = new RegExp(VEREX2.source + '|' + VEREX1.source)
-
-export const Rever = new RegExp(VEREX)
-
-/**
- * the result of smelling a version string
- *  proto (Protocols): protocol type value of Protocol. Examples: 'KERI', 'ACDC'
- *  vrsn (Version): protocol version named tuple (major, minor) of integers
- *  kind (Serials): serialization type value of Serials. Examples: 'JSON', 'CBOR', 'MGPK'
- *  size (number): integer size of raw serialization
- */
-type Smellage = [Protocols, Version, Serials, number]
-
-/**
- * Parse CESR version 1 regular expression matches from a version string.
- * @param match - the match array from the regular expression
- */
-function parseVersion1Matches(match: RegExpMatchArray): Smellage {
-  let proto: any
-  let major: any
-  let minor: any
-  let version: Version = new Version()
-  let kind: any
-  let size: any
-  const full = match[0]
-  ;[proto, major, minor, kind, size] = [
-    match[1],
-    match[2],
-    match[3],
-    match[4],
-    match[5],
-  ]
-  if (!Object.values(Protocols).includes(proto)) {
-    throw new Error(`Invalid protocol ${kind} in string = ${full}`)
-  }
-  try {
-    major = b64ToInt(major)
-  } catch (e) {
-    throw new Error(`Invalid major version ${major} in string = ${full}: ${e}`)
-  }
-  if (major < 2) {
-    throw new Error(`Incompatible major version ${major} with string = ${full}`)
-  }
-  try {
-    minor = b64ToInt(minor)
-  } catch (e) {
-    throw new Error(`Invalid minor version = ${minor}: ${e}`)
-  }
-  version.major = major
-  version.minor = minor
-
-  if (!Object.values(Serials).includes(kind)) {
-    throw new Error(`Invalid serialization kind ${kind} in string = ${full}`)
-  }
-  try {
-    size = b64ToInt(size)
-  } catch (e) {
-    throw new Error(`Invalid size = ${size}: ${e}`)
-  }
-  return [proto as Protocols, version, kind as Serials, size]
-}
-
-/**
- * Parse CESR version 2 regular expression matches from a version string.
- * @param match - the match array from the regular expression
- */
-function parseVersion2Matches(match: RegExpMatchArray): Smellage {
-  let proto: any
-  let major: any
-  let minor: any
-  let version: Version = new Version()
-  let kind: any
-  let size: any
-  const full = match[0]
-  ;[proto, major, minor, kind, size] = [
-    match[1],
-    match[2],
-    match[3],
-    match[4],
-    match[5],
-  ]
-  if (!Object.values(Protocols).includes(proto)) {
-    throw new Error(`Invalid protocol ${kind} in string = ${full}`)
-  }
-  try {
-    major = parseInt(major, 16)
-  } catch (e) {
-    throw new Error(`Invalid major version ${major} in string = ${full}: ${e}`)
-  }
-  if (major < 2) {
-    throw new Error(`Incompatible major version ${major} with string = ${full}`)
-  }
-  try {
-    minor = parseInt(minor, 16)
-  } catch (e) {
-    throw new Error(`Invalid minor version = ${minor}: ${e}`)
-  }
-  version.major = major
-  version.minor = minor
-
-  if (!Object.values(Serials).includes(kind)) {
-    throw new Error(`Invalid serialization kind ${kind} in string = ${full}`)
-  }
-  try {
-    size = parseInt(size, 16)
-  } catch (e) {
-    throw new Error(`Invalid size = ${size}: ${e}`)
-  }
-  return [proto as Protocols, version, kind as Serials, size]
-}
-
-/**
- * Regular expression matcher for the CESR version string
- * @param match - the match array from the regular expression
- */
-export function rematch(match: RegExpMatchArray): Smellage {
-  const full = match[0]
-  if (full.length === VER2FULLSPAN && full[full.length - 1] === VER2TERM) {
-    return parseVersion2Matches(match)
-  } else if (full.length === VER1FULLSPAN && full[full.length - 1] === VER1TERM) {
-    return parseVersion1Matches(match)
-  } else {
-    throw new Error(`Invalid version string = ${full}`)
-  }
-}
-
-/**
- * Deserializes a Version from a string
- * @param versionString - the version string to deserialize
- * returns Smellage a tuple of protocol, version, serialization, and size
- */
-export function deversify(versionString: string): Smellage {
-  const match = Rever.exec(versionString)
-  if (!match) {
-    throw new Error(`Invalid version string = ${versionString}`)
-  }
-  return rematch(match)
-}
-
-const VERRAWSIZE = 6
-
-/**
- * Generates a version string from a protocol, version, serialization, and size
- * @param protocol - the protocol to use
- * @param version - the version of the protocol to use
- * @param kind - the type of serialization to use
- * @param size - the size of the serialized data
- */
-export function versify(
-  protocol: Protocols = Protocols.KERI,
-  version: Version = Vrsn_1_0,
-  kind: Serials = Serials.JSON,
-  size: number = 0,
-) {
-  if (version.major < 2) {
-    const major = intToHex(version.major, 0)
-    const minor = intToHex(version.minor, 0)
-    const formattedSize = intToHex(size, VERRAWSIZE)
-    return `${protocol}${major}${minor}${kind}${formattedSize}${VER1TERM}`
-  } else {
-    const major = intToB64(version.major)
-    const minor = intToB64(version.minor)
-    const formattedSize = intToB64(size, VERRAWSIZE)
-    return `${protocol}${major}${minor}${kind}${formattedSize}${VER2TERM}`
-  }
 }
 
 /**
@@ -319,6 +75,9 @@ export function sizeify(
   return [raw, protocol, kind, data, version]
 }
 
+/**
+ * Character used to pad SAID values prior to calculation of the digest.
+ */
 export const SAID_PAD_CHARACTER = `#`
 
 /**
@@ -338,7 +97,7 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
 }
 
 /**
- * SAIDifies arbitrary data passed in as a map (Dict) object.
+ * Derives the raw SAID bytes from arbitrary data passed in as a field map object (Dict).
  * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
  *
  * @example
@@ -347,9 +106,10 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  *   const myData = {
  *     a: 1,
  *     b: 2,
+ *     d: ''
  *   }
  *   const label = 'd';
- *   const said = saidify(myData, label);
+ *   const said = deriveSAIDBytes(myData, label);
  *   console.log(said); // ELOaxFqMsS9NFeJiDpKTb3X-xJahjNbh13QoBPnSxMWV TODO update this with the correct SAID
  * ```
  *
@@ -358,7 +118,7 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  * @param kind - type of serialization to use
  * @param label - name of the property in the "data" field that will have the SAID placed inside
  */
-export function saidify(
+export function deriveSAIDBytes(
   data: Dict<any>,
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
@@ -391,5 +151,141 @@ export function saidify(
     args.push(digestage.length)
   }
 
-  return [digestage.fn(ser, ...args), data]
+  const raw = digestage.fn(ser, ...args)
+  validateRawSize(raw, code)
+
+  return [raw, data]
+}
+
+/**
+ * Create a fully qualified Base64 representation of the raw bytes encoded as bytes.
+ * This implementation only uses the hard part of the code as SAIDs do not have a variable part (soft size).
+ *
+ * Analogous to the Matter._infil() function from KERIpy
+ *
+ * @param raw - the raw bytes to encode
+ * @param code - the algorithm derivation code to use
+ */
+export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256): Uint8Array {
+  const sizeage = Sizes.get(code)
+  if (sizeage === undefined) {
+    throw new Error(`Unsupported digest algorithm code = ${code}`)
+  }
+  const [hs, ss, _fs, ls] = [sizeage.hs, sizeage.ss, sizeage.fs, sizeage.ls]
+  const cs = hs + ss
+  const rs = raw.length
+  const ps = (3 - ((rs + ls) % 3)) % 3 // net pad size given raw size and lead size
+  // net pad size must equal both code size remainder so that primitive both + converted padded raw is fs long.
+  // Assumes ls in (0, 1, 2) and cs % 4 != 3, fs % 4 == 0. Sizes table must ensure these properties.
+  // Even still, following check is a good idea.
+  if (cs % 4 !== ps - sizeage.ls) {
+    throw new Error(`Invalid code size for ${code} and raw pad size ${ps} given raw length ${rs}`)
+  }
+
+  // Prepad raw so we midpad the full primitive. Prepadding with ps+ls zero bytes ensures encodeB64 of
+  // prepad+lead+raw has no trailing pad characters. Finally skip first ps == cs % 4 of the converted characters
+  // to ensure that when full code is prepended the full primitive size is fs but midpad bits are zeros.
+  const prepad = new Uint8Array(ps + ls)
+  const combined = new Uint8Array(prepad.length + raw.length)
+
+  // fill out prepad
+  // when fixed and ls != 0 then cs % 4 is zero and ps === ls
+  // otherwise fixed and ls === 0 then cs % 4 === ps
+  for (let i = 0; i < ps; i++) {
+    prepad[i] = 0
+  }
+  combined.set(prepad)
+  // adjust the bytes considering padding
+  combined.set(raw, prepad.length)
+
+  return toBytes(code + encodeBase64Url(Buffer.from(combined)).slice(ps))
+}
+
+/**
+ * Create a fully qualified Base64 representation of the raw bytes encoded as a UTF-8 string.
+ * @param raw - the raw bytes to encode
+ * @param code - the algorithm derivation code to use
+ */
+export function qb64(raw: Uint8Array, code: string = SAIDDex.Blake3_256): string {
+  return fromBytes(qb64b(raw, code))
+}
+
+/**
+ * Calculates the raw size in bytes not including the leader (leading pad bytes) for a given code.
+ * Converts the Base64-encoded size back to the original byte size.
+ *
+ * @param code - the algorithm derivation code to calculate the raw size for
+ */
+export function rawSize(code: string = SAIDDex.Blake3_256): number {
+  if (code.length === 0) {
+    throw new Error('Invalid code, cannot calculate size.')
+  }
+  const sizeage = Sizes.get(code)
+
+  if (sizeage === undefined) {
+    throw new Error(`Unsupported digest algorithm code = ${code}`)
+  }
+  if (sizeage.fs === -1) {
+    throw new Error(`Unsupported variable size code=${code}`)
+  }
+
+  const cs = sizeage.hs + sizeage.ss // code size
+  const b64Size = sizeage.fs - cs // Strip the code size from the full size to get the Base64 size
+
+  // converts a Base64-encoded size back to the original byte size
+  // each Base64 character is 6 bits so the original size can be found by multiplying the
+  // Base64 length by 6/8 or the equivalent fraction, 3/4, as below
+  // rize = raw size in bytes
+  return Math.floor(b64Size * (3 / 4))
+    - sizeage.ls // subtracting the lead pad bytes size (ls)
+}
+
+/**
+ * Check whether the raw bytes contain enough content for the given derivation code algorithm.
+ * @param raw - raw bytes to check
+ * @param code - derivation code algorithm to check the size against
+ */
+export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_256) {
+  const rize = rawSize(code)
+  raw = raw.slice(0, rize)
+  if (raw.length != rize) {
+    throw new Error(
+      `Not enough raw bytes for code ${code}. Expected ${rize} got ${raw.length}.`,
+    )
+  }
+}
+
+/**
+ * SAIDifies arbitrary data passed in as a map (Dict) object.
+ * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
+ * Defaults to using Blake3-256 as the derivation algorithm and JSON as the serialization kind.
+ *
+ * @example
+ *
+ * ```ts
+ *   const myData = {
+ *     a: 1,
+ *     b: 2,
+ *     d: ''
+ *   }
+ *   const label = 'd';
+ *   const said = deriveSAIDBytes(myData, label);
+ *   console.log(said);
+ *   expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz');
+ * ```
+ *
+ * @param data - data to derive self-addressing data from and to add to as a prop labeled by `label`
+ * @param code - algorithm to be used to derive the SAID
+ * @param kind - type of serialization to use
+ * @param label - name of the property in the "data" field that will have the SAID placed inside
+ */
+export function saidify(
+  data: Dict<any>,
+  code: string = SAIDDex.Blake3_256,
+  kind: Serials = Serials.JSON,
+  label: string = 'd',
+): string {
+  const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
+  // TODO read rest of Saider.verify to see if I need anything else from it for SAID verification.
+  return qb64(raw, code)
 }

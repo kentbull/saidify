@@ -1,6 +1,6 @@
 {
   "name": "saidify",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/kentbull/saidify.git"
@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@noble/hashes": "^1.4.0",
+    "buffer": "^6.0.3",
     "cbor": "^9.0.2",
     "msgpack5": "^6.0.2"
   },
