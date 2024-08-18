@@ -18,6 +18,8 @@ Import 'saidify' and SAIDify your data:
 
 ```typescript
 import saidify from 'saidify'
+
+// create data to become self-addressing
 const myData = {
   a: 1,
   b: 2,
@@ -26,9 +28,14 @@ const myData = {
 const label = 'd'
 const said = deriveSAIDBytes(myData, label)
 console.log(said)
-
 // test assertion with Vitest
 expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
+
+// verify self addressing identifier
+const computedSAID = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
+const doesVerify = verify(myData, computedSAID, label)
+// test assertion
+expect(doesVerify).toEqual(true)
 ```
 
 ## Description
