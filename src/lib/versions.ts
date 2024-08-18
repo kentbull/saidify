@@ -19,6 +19,7 @@ export class Version implements Versionage {
 }
 
 export const Vrsn_1_0 = new Version(1, 0)
+export const Vrsn_1_1 = new Version(1, 1)
 export const Vrsn_2_0 = new Version(2, 0)
 // Version string in JSON, CBOR, or MGPK field map serialization version 1
 export const VER1FULLSPAN = 17 // number of characters in full version string
@@ -28,9 +29,22 @@ export const VEREX1 = /([A-Z]{4})([0-9a-f])([0-9a-f])([A-Z]{4})([0-9a-f]{6})_/
 export const VER2FULLSPAN = 16 // number of characters in full version string
 export const VER2TERM = `.`
 export const VEREX2 = /([A-Z]{4})([0-9A-Za-z_-])([0-9A-Za-z_-]{2})([A-Z]{4})([0-9A-Za-z_-]{4})\./
+
 // Combined regular expression
-export const VEREX = new RegExp(VEREX2.source + '|' + VEREX1.source)
-export const Rever = new RegExp(VEREX)
+// WARNING: cannot use this (from KERIpy) because JavaScript regex does not combine regexes like Python does to be tried repeatedly
+// and only return one capture group. Instead JavaScript regexes return all capture groups for all regexes in the combined regex.
+// export const VEREX = new RegExp(VEREX2.source + '|' + VEREX1.source);
+// export const Rever = new RegExp(VEREX);
+
+/**
+ * regular expression for CESR v1 version string
+ */
+export const ReverV1 = new RegExp(VEREX1)
+/**
+ * regular expression for CESR v2 version string
+ */
+export const ReverV2 = new RegExp(VEREX2)
+
 /**
  * the result of smelling a version string
  *  proto (Protocols): protocol type value of Protocol. Examples: 'KERI', 'ACDC'
@@ -45,6 +59,55 @@ export type Smellage = [Protocols, Version, Serials, number]
  * @param match - the match array from the regular expression
  */
 function parseVersion1Matches(match: RegExpMatchArray): Smellage {
+  let proto: any
+  let major: any
+  let minor: any
+  let version: Version = new Version()
+  let kind: any
+  let size: any
+  const full = match[0]
+  ;[proto, major, minor, kind, size] = [
+    match[1],
+    match[2],
+    match[3],
+    match[4],
+    match[5],
+  ]
+  if (!Object.values(Protocols).includes(proto)) {
+    throw new Error(`Invalid protocol ${kind} in string = ${full}`)
+  }
+  try {
+    major = parseInt(major, 16)
+  } catch (e) {
+    throw new Error(`Invalid major version ${major} in string = ${full}: ${e}`)
+  }
+  if (major > 1) {
+    throw new Error(`Incompatible major version ${major} with string = ${full}`)
+  }
+  try {
+    minor = parseInt(minor, 16)
+  } catch (e) {
+    throw new Error(`Invalid minor version = ${minor}: ${e}`)
+  }
+  version.major = major
+  version.minor = minor
+
+  if (!Object.values(Serials).includes(kind)) {
+    throw new Error(`Invalid serialization kind ${kind} in string = ${full}`)
+  }
+  try {
+    size = parseInt(size, 16)
+  } catch (e) {
+    throw new Error(`Invalid size = ${size}: ${e}`)
+  }
+  return [proto as Protocols, version, kind as Serials, size]
+}
+
+/**
+ * Parse CESR version 2 regular expression matches from a version string.
+ * @param match - the match array from the regular expression
+ */
+function parseVersion2Matches(match: RegExpMatchArray): Smellage {
   let proto: any
   let major: any
   let minor: any
@@ -90,55 +153,6 @@ function parseVersion1Matches(match: RegExpMatchArray): Smellage {
 }
 
 /**
- * Parse CESR version 2 regular expression matches from a version string.
- * @param match - the match array from the regular expression
- */
-function parseVersion2Matches(match: RegExpMatchArray): Smellage {
-  let proto: any
-  let major: any
-  let minor: any
-  let version: Version = new Version()
-  let kind: any
-  let size: any
-  const full = match[0]
-  ;[proto, major, minor, kind, size] = [
-    match[1],
-    match[2],
-    match[3],
-    match[4],
-    match[5],
-  ]
-  if (!Object.values(Protocols).includes(proto)) {
-    throw new Error(`Invalid protocol ${kind} in string = ${full}`)
-  }
-  try {
-    major = parseInt(major, 16)
-  } catch (e) {
-    throw new Error(`Invalid major version ${major} in string = ${full}: ${e}`)
-  }
-  if (major < 2) {
-    throw new Error(`Incompatible major version ${major} with string = ${full}`)
-  }
-  try {
-    minor = parseInt(minor, 16)
-  } catch (e) {
-    throw new Error(`Invalid minor version = ${minor}: ${e}`)
-  }
-  version.major = major
-  version.minor = minor
-
-  if (!Object.values(Serials).includes(kind)) {
-    throw new Error(`Invalid serialization kind ${kind} in string = ${full}`)
-  }
-  try {
-    size = parseInt(size, 16)
-  } catch (e) {
-    throw new Error(`Invalid size = ${size}: ${e}`)
-  }
-  return [proto as Protocols, version, kind as Serials, size]
-}
-
-/**
  * Regular expression matcher for the CESR version string
  * @param match - the match array from the regular expression
  */
@@ -159,11 +173,14 @@ export function rematch(match: RegExpMatchArray): Smellage {
  * returns Smellage a tuple of protocol, version, serialization, and size
  */
 export function deversify(versionString: string): Smellage {
-  const match = Rever.exec(versionString)
-  if (!match) {
-    throw new Error(`Invalid version string = ${versionString}`)
+  const matchV2 = ReverV2.exec(versionString)
+  const matchV1 = ReverV1.exec(versionString)
+  if (matchV2) {
+    return rematch(matchV2)
+  } else if (matchV1) {
+    return rematch(matchV1)
   }
-  return rematch(match)
+  throw new Error(`Invalid version string = ${versionString}`)
 }
 
 const VERRAWSIZE = 6
@@ -188,8 +205,8 @@ export function versify(
     return `${protocol}${major}${minor}${kind}${formattedSize}${VER1TERM}`
   } else {
     const major = intToB64(version.major)
-    const minor = intToB64(version.minor)
-    const formattedSize = intToB64(size, VERRAWSIZE)
+    const minor = intToB64(version.minor, 2)
+    const formattedSize = intToB64(size, 4)
     return `${protocol}${major}${minor}${kind}${formattedSize}${VER2TERM}`
   }
 }
