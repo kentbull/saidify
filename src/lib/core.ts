@@ -286,6 +286,66 @@ export function saidify(
   label: string = 'd',
 ): string {
   const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
-  // TODO read rest of Saider.verify to see if I need anything else from it for SAID verification.
   return qb64(raw, code)
+}
+
+/**
+ * Verifies a self-addressing data structure against a SAID. If the SAID is not supplied then the indicated
+ * labeled field is used to read the SAID to use to verify the data.
+ *
+ * IMPORTANT: This assumes insertion-order preserving data structures. Newer versions of JavaScript/TypeScript
+ * guarantee this but older versions do not.
+ * If you are using an older version of JavaScript/TypeScript then this is currently unsupported as the
+ * order of fields will not be deterministic.
+ *
+ * @example
+ *
+ * ```ts
+ *   const myData = {
+ *     a: 1,
+ *     b: 2,
+ *     d: 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
+ *   }
+ *   const label = 'd';
+ *   const said = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz';
+ *   const doesVerify = verify(myData, label, said);
+ *   // test assertion
+ *   expect(doesVerify).toEqual(true);
+ * ```
+ *
+ * @param sad - The self-addressing data to verify. Should contain the digest field labeled with the 'label' param.
+ * @param label - The label of the self-addressing digest field, the SAID, in the self-addressing data 'sad' param.
+ * @param said - The SAID to verify against. Defaults to the 'label' field of the 'sad' param.
+ * @param code - The derivation code specifying which algorithm to use. Defaults to Blake3-256.
+ * @param kind - The serialization kind to use. Defaults to JSON.
+ * @param prefixed - Whether to verify the embedded SAID in the data structure against the computed qb64.
+ * @param versioned - Whether to verify the version field in the data structure against the derived version field.
+ */
+export function verify(
+  sad: Dict<any>,
+  said?: string,
+  label: string = 'd',
+  code: string = SAIDDex.Blake3_256,
+  kind: Serials = Serials.JSON,
+  prefixed: boolean = false,
+  versioned: boolean = false,
+): boolean {
+  if (sad[label] === undefined) {
+    throw new Error(`Cannot verify self addressing data without digest field ${label}`)
+  }
+  // code = detectCode(data)
+  const [raw, derivedSad] = deriveSAIDBytes(sad, code, kind, label)
+  if (prefixed && sad[label] !== said) {
+    return false
+  }
+  if ('v' in sad && versioned) {
+    if (sad['v'] !== derivedSad['v']) {
+      return false
+    }
+  }
+  if (said) {
+    return said === qb64(raw, code)
+  } else {
+    return sad[label] === qb64(raw, code)
+  }
 }

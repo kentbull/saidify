@@ -23,11 +23,11 @@ export const Vrsn_1_1 = new Version(1, 1)
 export const Vrsn_2_0 = new Version(2, 0)
 // Version string in JSON, CBOR, or MGPK field map serialization version 1
 export const VER1FULLSPAN = 17 // number of characters in full version string
-export const VER1TERM = `_`
+export const VER1TERM = `_` // Terminator for CESR v1 version string
 export const VEREX1 = /([A-Z]{4})([0-9a-f])([0-9a-f])([A-Z]{4})([0-9a-f]{6})_/
 // Version string in JSON, CBOR, or MGPK field map serialization version 2
 export const VER2FULLSPAN = 16 // number of characters in full version string
-export const VER2TERM = `.`
+export const VER2TERM = `.` // Terminator for CESR v2 version string
 export const VEREX2 = /([A-Z]{4})([0-9A-Za-z_-])([0-9A-Za-z_-]{2})([A-Z]{4})([0-9A-Za-z_-]{4})\./
 
 // Combined regular expression

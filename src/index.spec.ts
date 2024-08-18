@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import * as Lib from './index.js'
 import { SAIDDex, Serials } from './index.js'
 
@@ -42,7 +42,7 @@ describe('saidify function tests', () => {
 })
 
 describe('example code tests', () => {
-  test(`README and JSDoc code test`, () => {
+  it(`README and JSDoc code test`, () => {
     const data = {
       a: 1,
       b: 2,
@@ -51,5 +51,40 @@ describe('example code tests', () => {
     const label = 'd'
     const said = Lib.saidify(data, SAIDDex.Blake3_256, Serials.JSON, label)
     expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
+  })
+})
+
+describe(`verify function tests`, () => {
+  it(`should verify when only self-addressing data structure passed in`, () => {
+    const data = {
+      a: 1,
+      b: 2,
+      d: 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz',
+    }
+    const doesVerify = Lib.verify(data)
+    expect(doesVerify).toEqual(true)
+  })
+
+  it(`should verify self-addressing data against the SAID`, () => {
+    const said = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
+    const data = {
+      a: 1,
+      b: 2,
+      d: 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz',
+    }
+    const doesVerify = Lib.verify(data, said)
+    expect(doesVerify).toEqual(true)
+  })
+
+  it(`should verify a self-addressing data structure and it's labeled SAID field against a SAID`, () => {
+    const said = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
+    const data = {
+      a: 1,
+      b: 2,
+      d: 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz',
+    }
+    const label = 'd'
+    const doesVerify = Lib.verify(data, said, label, SAIDDex.Blake3_256, Serials.JSON, true)
+    expect(doesVerify).toEqual(true)
   })
 })
