@@ -275,15 +275,15 @@ export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_2
  * ```
  *
  * @param data - data to derive self-addressing data from and to add to as a prop labeled by `label`
+ * @param label - name of the property in the "data" field that will have the SAID placed inside
  * @param code - algorithm to be used to derive the SAID
  * @param kind - type of serialization to use
- * @param label - name of the property in the "data" field that will have the SAID placed inside
  */
 export function saidify(
   data: Dict<any>,
+  label: string = 'd',
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
-  label: string = 'd',
 ): string {
   const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
   return qb64(raw, code)
