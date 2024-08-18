@@ -26,17 +26,17 @@ describe('saidify function tests', () => {
   })
 
   it(`produces a valid SAID for Blake3-256 and JSON with data and code arg`, () => {
-    const saidDataCode = Lib.saidify(data, code)
+    const saidDataCode = Lib.saidify(data, 'd', code)
     expect(saidDataCode).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
   })
 
   it(`produces a valid SAID for Blake3-256 and JSON with data and kind arg`, () => {
-    const saidDataCodeKind = Lib.saidify(data, code, kind)
+    const saidDataCodeKind = Lib.saidify(data, 'd', code, kind)
     expect(saidDataCodeKind).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
   })
 
   it(`produces a valid SAID for Blake3-256 and JSON with data, code, kind, and label arg`, () => {
-    const saidAllArgs = Lib.saidify(data, code, kind, label)
+    const saidAllArgs = Lib.saidify(data, label, code, kind)
     expect(saidAllArgs).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
   })
 })
@@ -49,7 +49,7 @@ describe('example code tests', () => {
       d: '',
     }
     const label = 'd'
-    const said = Lib.saidify(data, SAIDDex.Blake3_256, Serials.JSON, label)
+    const said = Lib.saidify(data, label, SAIDDex.Blake3_256, Serials.JSON)
     expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
   })
 })
@@ -84,7 +84,7 @@ describe(`verify function tests`, () => {
       d: 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz',
     }
     const label = 'd'
-    const doesVerify = Lib.verify(data, said, label, SAIDDex.Blake3_256, Serials.JSON, true)
+    const doesVerify = Lib.verify(data, said, label)
     expect(doesVerify).toEqual(true)
   })
 })
