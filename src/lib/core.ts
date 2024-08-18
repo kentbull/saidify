@@ -110,7 +110,7 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  *   }
  *   const label = 'd';
  *   const said = deriveSAIDBytes(myData, label);
- *   console.log(said); // ELOaxFqMsS9NFeJiDpKTb3X-xJahjNbh13QoBPnSxMWV TODO update this with the correct SAID
+ *   // you can now use this SAID Uint8Array to create a fully qualified Base64 SAID
  * ```
  *
  * @param data - data to derive self-addressing data from and to add to as a prop labeled by `label`
