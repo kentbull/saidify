@@ -59,4 +59,4 @@ A number of different specifications describe SAIDs.
 
 ## Development Statistics
 
-![Alt](https://repobeats.axiom.co/api/embed/3c932f1cb76da4ad21328bfdd0ad1c6fbbe76a0b.svg 'Repobeats analytics image')
+![Alt](https://repobeats.axiom.co/api/embed/4e4bac4510f2c970e06c5998e2156589343445ed.svg "Repobeats analytics image")
