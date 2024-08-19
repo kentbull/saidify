@@ -16,12 +16,42 @@ jobs:
         run: |
           echo "isNpmTokenSet: ${{secrets.NPM_TOKEN != ''}}"
           echo "::set-output name=isNpmTokenSet::${{secrets.NPM_TOKEN != ''}}"
-  release-canary:
-    needs: [checkNpmTokenSet]
-    if: needs.checkNpmTokenSet.outputs.isNpmTokenSet == 'true'
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: prisma-labs/dripip@master
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Setup environment, cache, and dependencies
+        uses: ./.github/actions/setup
+      - name: Build library
+        run: pnpm build
+      - name: Run tests
+        run: pnpm test
+
+  test-coverage:
+    name: Run tests and collect coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          npmToken: ${{secrets.NPM_TOKEN}}
-          githubToken: ${{secrets.GITHUB_TOKEN}}
+          fetch-depth: 0
+      - name: Setup environment, cache, and dependencies
+        uses: ./.github/actions/setup
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+# TODO re-enable when I get DripIP working
+#  release-canary:
+#    needs: [checkNpmTokenSet]
+#    if: needs.checkNpmTokenSet.outputs.isNpmTokenSet == 'true'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: prisma-labs/dripip@master
+#        with:
+#          npmToken: ${{secrets.NPM_TOKEN}}
+#          githubToken: ${{secrets.GITHUB_TOKEN}}

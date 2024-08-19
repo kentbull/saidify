@@ -7,7 +7,7 @@ import onlyWarn from 'eslint-plugin-only-warn'
 export default [
   {
     files: ['**/*.ts'],
-    ignores: ['build/**/*', 'eslint.config.js'],
+    ignores: ['build/**/*', 'eslint.config.js', 'vitest.config.ts'],
     plugins: { tsdoc: tsdoc, 'only-warn': onlyWarn, '@typescript-eslint': tsEslintPlugin },
     rules: {
       // '@typescript-eslint/consistent-type-imports': 'warn',
