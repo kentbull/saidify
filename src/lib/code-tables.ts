@@ -47,7 +47,8 @@ export class Sizeage implements CodeCounts {
 export const Sizes = new Map(
   Object.entries({
     E: new Sizeage(1, 0, 44, 0), // Blake3 256 bit digest self-addressing derivation.
-    H: new Sizeage(1, 0, 44, 0), // SHA3 256 bit digest self-addressing derivation.
+    F: new Sizeage(1, 0, 44, 0), // Blake2b 256 bit digest self-addressing derivation.
     I: new Sizeage(1, 0, 44, 0), // SHA2 256 bit digest self-addressing derivation.
+    H: new Sizeage(1, 0, 44, 0), // SHA3 256 bit digest self-addressing derivation.
   }),
 )
