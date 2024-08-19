@@ -45,3 +45,20 @@ jobs:
           node-version: ${{matrix.node-version}}
       - run: pnpm build
       - run: pnpm test
+
+  test-coverage:
+    name: Run tests and collect coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup environment, cache, and dependencies
+        uses: ./.github/actions/setup
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
