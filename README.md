@@ -1,6 +1,6 @@
 # SAIDify - (sēdəˌfī)
 
-[![trunk](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml/badge.svg)](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml)
+[![trunk](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml/badge.svg)](https://github.com/kentbull/saidify/actions/workflows/trunk.yaml) [![codecov](https://codecov.io/github/kentbull/saidify/graph/badge.svg?token=4RX12XZKNF)](https://codecov.io/github/kentbull/saidify)
 
 Generate self-addressing identifiers on arbitrary data.
 
