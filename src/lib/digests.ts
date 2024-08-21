@@ -1,7 +1,7 @@
-import { blake3 } from '@noble/hashes/blake3'
-import { sha3_256 } from '@noble/hashes/sha3'
-import { sha256 } from '@noble/hashes/sha256'
 import { blake2b } from '@noble/hashes/blake2b'
+import { blake3 } from '@noble/hashes/blake3'
+import { sha256 } from '@noble/hashes/sha256'
+import { sha3_256 } from '@noble/hashes/sha3'
 
 /**
  * A base class for lists of things
@@ -63,7 +63,6 @@ export const DigestAlgoMap = new Map<string, Digestage>([
   [SAIDDex.SHA3_256, new Digestage(deriveSHA3_256, 32, 0)],
 ])
 
-
 function deriveBlake3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
   return Buffer.from(blake3.create({ dkLen: 32 }).update(ser).digest())
 }
@@ -79,8 +78,3 @@ function deriveSHA2_256(ser: Uint8Array, _digestSize: number | undefined, _lengt
 function deriveSHA3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
   return Buffer.from(sha3_256(ser))
 }
-
-
-
-
-

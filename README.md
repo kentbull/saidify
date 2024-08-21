@@ -26,14 +26,16 @@ const myData = {
   d: '',
 }
 const label = 'd'
-const said = saidify(myData, label)
+const [said, sad] = saidify(myData, label)
+// said is self-addressing identifier
+// sad is self-addressing data
 console.log(said)
 // ...Vitest test assertion
 expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
 
 // verify self addressing identifier
 const computedSAID = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
-const doesVerify = verify(myData, computedSAID, label)
+const doesVerify = verify(sad, computedSAID, label) // can verify with original myData or sad
 // ...Vitest test assertion
 expect(doesVerify).toEqual(true)
 ```
