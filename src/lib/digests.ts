@@ -1,4 +1,7 @@
 import { blake3 } from '@noble/hashes/blake3'
+import { sha3_256 } from '@noble/hashes/sha3'
+import { sha256 } from '@noble/hashes/sha256'
+import { blake2b } from '@noble/hashes/blake2b'
 
 /**
  * A base class for lists of things
@@ -21,8 +24,9 @@ export class Codex {
  */
 export class SAIDAlgoCodex extends Codex {
   Blake3_256: string = 'E' // Blake3 256 bit digest self-addressing derivation.
-  SHA3_256: string = 'H' // SHA3 256 bit digest self-addressing derivation.
+  Blake2b_256: string = 'F' // Blake2b 256 bit digest self-addressing derivation.
   SHA2_256: string = 'I' // SHA2 256 bit digest self-addressing derivation.
+  SHA3_256: string = 'H' // SHA3 256 bit digest self-addressing derivation.
 }
 export const SAIDDex = new SAIDAlgoCodex() // Create an instance of SAIDAlgoCodex
 
@@ -54,8 +58,29 @@ class Digestage {
 
 export const DigestAlgoMap = new Map<string, Digestage>([
   [SAIDDex.Blake3_256, new Digestage(deriveBlake3_256, 32, 0)],
+  [SAIDDex.Blake2b_256, new Digestage(deriveBlake2b_256, 32, 0)],
+  [SAIDDex.SHA2_256, new Digestage(deriveSHA2_256, 32, 0)],
+  [SAIDDex.SHA3_256, new Digestage(deriveSHA3_256, 32, 0)],
 ])
+
 
 function deriveBlake3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
   return Buffer.from(blake3.create({ dkLen: 32 }).update(ser).digest())
 }
+
+function deriveBlake2b_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+  return Buffer.from(blake2b(ser, { dkLen: 32 }))
+}
+
+function deriveSHA2_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+  return Buffer.from(sha256(ser))
+}
+
+function deriveSHA3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+  return Buffer.from(sha3_256(ser))
+}
+
+
+
+
+

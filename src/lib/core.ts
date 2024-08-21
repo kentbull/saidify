@@ -46,7 +46,7 @@ export function dumpBytes(data: Object, kind: Serials): Uint8Array {
 
 /**
  * Compute serialized size of a data object and update the version field.
- * Returns a typle of associated values extracted or changed by sizeify
+ * Returns a tuple of associated values extracted or changed by sizeify
  * @param data - data object to add a size attribute to and serialize
  * @param kind - type of serialization to make
  */

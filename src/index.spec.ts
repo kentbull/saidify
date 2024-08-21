@@ -39,6 +39,20 @@ describe('saidify function tests', () => {
     const saidAllArgs = Lib.saidify(data, label, code, kind)
     expect(saidAllArgs).toEqual(`EHSOlNZzwiekacJenXM3qPNU9-07ic_G0ejn8hrA2lKQ`)
   })
+
+  it(`produces a valid SAID for Blake2b-256 and JSON with data, code, kind, and label arg`, () => {
+    const saidAllArgs = Lib.saidify(data, label, code=SAIDDex.Blake2b_256, kind)
+    expect(saidAllArgs).toEqual(`FIzy6Co4x-ynSoF7syuL15Vf82PxldUz05iTGPqiG31u`)
+  })
+
+  it(`produces a valid SAID for SHA2-256 and JSON with data, code, kind, and label arg`, () => {
+    const saidAllArgs = Lib.saidify(data, label, code=SAIDDex.SHA2_256, kind)
+    expect(saidAllArgs).toEqual(`IOwKVs_pD6kKKw1_eHXI4CUfRfw4mBpvlUuIDdZQXoPr`)})
+
+  it(`produces a valid SAID for SHA3-256 and JSON with data, code, kind, and label arg`, () => {
+    const saidAllArgs = Lib.saidify(data, label, code=SAIDDex.SHA3_256, kind)
+    expect(saidAllArgs).toEqual(`HLL3GkCKe6HnqkP4ENBWjLlAQVR6Agsw7TVNToyn0lk3`)
+  })
 })
 
 describe('example code tests', () => {
