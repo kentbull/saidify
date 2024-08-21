@@ -260,6 +260,10 @@ export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_2
  * Defaults to using the customary letter `d` as the label. The 'd' stands for digest.
  * Defaults to using Blake3-256 as the derivation algorithm and JSON as the serialization kind.
  *
+ * Returns a tuple of [said, saidified data]
+ *   - said: Self-addressing identifier; the fully qualified Base64 SAID
+ *   - sad: Self-addressing data; the data object with the SAID added to the field labeled by `label`
+ *
  * @example
  *
  * ```ts
@@ -284,9 +288,11 @@ export function saidify(
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
-): string {
-  const [raw, _data] = deriveSAIDBytes(data, code, kind, label)
-  return qb64(raw, code)
+): [string, Dict<any>] {
+  const [raw, sad] = deriveSAIDBytes(data, code, kind, label)
+  const said = qb64(raw, code)
+  sad[label] = said
+  return [said, sad]
 }
 
 /**
