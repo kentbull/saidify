@@ -30,7 +30,7 @@ export class SAIDAlgoCodex extends Codex {
 }
 export const SAIDDex = new SAIDAlgoCodex() // Create an instance of SAIDAlgoCodex
 
-type DigestFn = (ser: Uint8Array, digestSize: number | undefined, length: number | undefined) => Buffer
+type DigestFn = (ser: Uint8Array) => Buffer
 
 /**
  * A class for storing a digest function and its size (not default) and length.
@@ -63,18 +63,18 @@ export const DigestAlgoMap = new Map<string, Digestage>([
   [SAIDDex.SHA3_256, new Digestage(deriveSHA3_256, 32, 0)],
 ])
 
-function deriveBlake3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
-  return Buffer.from(blake3.create({ dkLen: 32 }).update(ser).digest())
+function deriveBlake3_256(ser: Uint8Array): Buffer {
+  return Buffer.from(blake3(ser, { dkLen: 32 }))
 }
 
-function deriveBlake2b_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+function deriveBlake2b_256(ser: Uint8Array): Buffer {
   return Buffer.from(blake2b(ser, { dkLen: 32 }))
 }
 
-function deriveSHA2_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+function deriveSHA2_256(ser: Uint8Array): Buffer {
   return Buffer.from(sha256(ser))
 }
 
-function deriveSHA3_256(ser: Uint8Array, _digestSize: number | undefined, _length: number | undefined): Buffer {
+function deriveSHA3_256(ser: Uint8Array): Buffer {
   return Buffer.from(sha3_256(ser))
 }

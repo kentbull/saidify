@@ -143,15 +143,8 @@ export function deriveSAIDBytes(
   }
 
   const ser = serialize({ ...data }, kind)
-  const args: [number | undefined, number | undefined] = [undefined, undefined]
-  if (digestage.size != undefined) {
-    args.push(digestage.size)
-  }
-  if (digestage.length != undefined) {
-    args.push(digestage.length)
-  }
 
-  const raw = digestage.fn(ser, ...args)
+  const raw = digestage.fn(ser)
   validateRawSize(raw, code)
 
   return [raw, data]
