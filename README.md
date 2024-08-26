@@ -55,7 +55,7 @@ A number of different specifications describe SAIDs.
 ## Sources and References
 
 - [signify-ts](https://github.com/WebOfTrust/signify-ts)
-  - Most of the code in this repository is lifed from the SignifyTS project.
+  - Most of the code in this repository is lifted from the SignifyTS project.
 - [keripy](https://github.com/WebOfTrust/keripy)
   - Some of the code in this repository is inspired by KERIpy, the Python implementation of KERI.
 
