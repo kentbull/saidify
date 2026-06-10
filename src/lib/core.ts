@@ -81,6 +81,12 @@ export function sizeify(
 export const SAID_PAD_CHARACTER = `#`
 
 /**
+ * Prefix for URN-based SAIDs.
+ * Prepended to the `#` placeholder before the digest is calculated (pre-processing) for size-sensitive serializations.
+ */
+export const URN_SAID_PREFIX = `urn:said:`
+
+/**
  * Serialize data with serialization kind if provided otherwise inspect 'v' version string for kind
  * @param data - data to serialize
  * @param kind - serialization kind, defaults to JSON
@@ -117,12 +123,14 @@ export function serialize(data: Dict<any>, kind?: Serials): Uint8Array {
  * @param code - algorithm to be used to derive the SAID
  * @param kind - type of serialization to use
  * @param label - name of the property in the "data" field that will have the SAID placed inside
+ * @param prefix - Prepends `urn:said:` to the placeholder before hashing.
  */
 export function deriveSAIDBytes(
   data: Dict<any>,
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
   label: string = `d`,
+  prefix: string = ``,
 ): [Uint8Array, Dict<any>] {
   if (!(label in data)) {
     throw new Error(`Missing id field labeled "${label}" in `)
@@ -132,7 +140,7 @@ export function deriveSAIDBytes(
   if (algo === undefined) {
     throw new Error(`Unsupported digest algorithm code = ${code}`)
   }
-  data[label] = ''.padStart(algo.fs, SAID_PAD_CHARACTER)
+  data[label] = prefix + ''.padStart(algo.fs, SAID_PAD_CHARACTER)
   if (`v` in data) {
     ;[, , kind, data] = sizeify(data, kind)
   }
@@ -275,17 +283,50 @@ export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_2
  * @param label - name of the property in the "data" field that will have the SAID placed inside
  * @param code - algorithm to be used to derive the SAID
  * @param kind - type of serialization to use
+ * @param prefix - producing a `urn:said:`-prefixed identifier when using `URN_SAID_PREFIX`.
  */
 export function saidify(
   data: Dict<any>,
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
   kind: Serials = Serials.JSON,
+  prefix: string = ``,
 ): [string, Dict<any>] {
-  const [raw, sad] = deriveSAIDBytes(data, code, kind, label)
-  const said = qb64(raw, code)
+  const [raw, sad] = deriveSAIDBytes(data, code, kind, label, prefix)
+  const said = prefix + qb64(raw, code)
   sad[label] = said
   return [said, sad]
+}
+
+/**
+ * The `urn:said:` prefix is included in the placeholder prior to digest
+ * calculation (pre-processing), so the serialized byte size is preserved when the placeholder is
+ * replaced with the final SAID.
+ *
+ * Returns a tuple of [said, saidified data] where `said` is the full `urn:said:<SAID>` string and the
+ * field labeled by `label` in the returned data contains that same `urn:said:<SAID>` string.
+ *
+ * @example
+ *
+ * ```ts
+ *   const data = { id: '', first: 'Sue', last: 'Smith', role: 'Founder' }
+ *   const [urn, sad] = saidifyUrn(data, 'id')
+ *   // urn === 'urn:said:ELDYOBfFDX7hCuC0aJk1ux-n4I2U4FHdsT5RdiEas_It'
+ *   // sad.id === urn
+ * ```
+ *
+ * @param data - data to derive self-addressing data from and to add to as a prop labeled by `label`
+ * @param label - name of the property in the "data" field that will have the SAID placed inside
+ * @param code - algorithm to be used to derive the SAID
+ * @param kind - type of serialization to use
+ */
+export function saidifyUrn(
+  data: Dict<any>,
+  label: string = 'd',
+  code: string = SAIDDex.Blake3_256,
+  kind: Serials = Serials.JSON,
+): [string, Dict<any>] {
+  return saidify(data, label, code, kind, URN_SAID_PREFIX)
 }
 
 /**
@@ -319,6 +360,7 @@ export function saidify(
  * @param kind - The serialization kind to use. Defaults to JSON.
  * @param prefixed - Whether to verify the embedded SAID in the data structure against the computed qb64.
  * @param versioned - Whether to verify the version field in the data structure against the derived version field.
+ * @param prefix - Prepends `urn:said:` to the placeholder before hashing.
  */
 export function verify(
   sad: Dict<any>,
@@ -328,12 +370,14 @@ export function verify(
   kind: Serials = Serials.JSON,
   prefixed: boolean = false,
   versioned: boolean = false,
+  prefix: string = ``,
 ): boolean {
   if (sad[label] === undefined) {
     throw new Error(`Cannot verify self addressing data without digest field ${label}`)
   }
   // code = detectCode(data)
-  const [raw, derivedSad] = deriveSAIDBytes(sad, code, kind, label)
+  const [raw, derivedSad] = deriveSAIDBytes(sad, code, kind, label, prefix)
+  const computed = prefix + qb64(raw, code)
   if (prefixed && sad[label] !== said) {
     return false
   }
@@ -343,8 +387,33 @@ export function verify(
     }
   }
   if (said) {
-    return said === qb64(raw, code)
+    return said === computed
   } else {
-    return sad[label] === qb64(raw, code)
+    return sad[label] === computed
   }
+}
+
+/**
+ * Recomputes the digest using a `urn:said:`-prefixed placeholder (pre-processing) and
+ * compares against the supplied (or embedded) `urn:said:<SAID>` value.
+ *
+ * @param sad - The self-addressing data to verify. The field labeled `label` should contain a
+ *   `urn:said:<SAID>` value.
+ * @param said - The full `urn:said:<SAID>` to verify against. Defaults to the `label` field of `sad`.
+ * @param label - The label of the self-addressing digest field in `sad`.
+ * @param code - The derivation code specifying which algorithm to use. Defaults to Blake3-256.
+ * @param kind - The serialization kind to use. Defaults to JSON.
+ * @param prefixed - Whether to verify the embedded value in the data structure against `said`.
+ * @param versioned - Whether to verify the version field against the derived version field.
+ */
+export function verifyUrn(
+  sad: Dict<any>,
+  said?: string,
+  label: string = 'd',
+  code: string = SAIDDex.Blake3_256,
+  kind: Serials = Serials.JSON,
+  prefixed: boolean = false,
+  versioned: boolean = false,
+): boolean {
+  return verify(sad, said, label, code, kind, prefixed, versioned, URN_SAID_PREFIX)
 }

@@ -151,3 +151,41 @@ describe(`verify function tests`, () => {
     expect(doesVerify).toEqual(true)
   })
 })
+
+describe(`urn:said saidifier tests`, () => {
+  it(`embeds a urn:said-prefixed identifier and preserves the field length`, () => {
+    const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
+    const [said, sad] = Lib.saidifyUrn(data, `id`)
+    expect(said.startsWith(Lib.URN_SAID_PREFIX)).toEqual(true)
+    // 'urn:said:' (9 chars) + 44-char SAID = 53 chars, before and after replacement
+    expect(sad[`id`].length).toEqual(Lib.URN_SAID_PREFIX.length + 44)
+    expect(sad[`id`]).toEqual(said)
+  })
+
+  it(`round-trips verification for a urn:said identifier`, () => {
+    const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
+    const [said, sad] = Lib.saidifyUrn(data, `id`)
+    expect(Lib.verifyUrn(sad, undefined, `id`)).toEqual(true)
+    expect(Lib.verifyUrn(sad, said, `id`)).toEqual(true)
+  })
+
+  it(`pre-processing binds the prefix, so the urn digest differs from the bare SAID`, () => {
+    const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
+    const [urnSaid] = Lib.saidifyUrn({ ...data }, `id`)
+    const [bareSaid] = Lib.saidify({ ...data }, `id`)
+    expect(urnSaid).not.toEqual(Lib.URN_SAID_PREFIX + bareSaid)
+  })
+
+  it(`fails plain verification when the urn prefix is not accounted for`, () => {
+    const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
+    const [, sad] = Lib.saidifyUrn(data, `id`)
+    expect(Lib.verify(sad, undefined, `id`)).toEqual(false)
+  })
+
+  it(`supports an explicit prefix argument equivalently to saidifyUrn`, () => {
+    const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
+    const [viaWrapper] = Lib.saidifyUrn({ ...data }, `id`)
+    const [viaArg] = Lib.saidify({ ...data }, `id`, SAIDDex.Blake3_256, Serials.JSON, Lib.URN_SAID_PREFIX)
+    expect(viaArg).toEqual(viaWrapper)
+  })
+})
