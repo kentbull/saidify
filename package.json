@@ -43,7 +43,7 @@
     "check:format": "dprint check",
     "check:lint": "eslint . --max-warnings 0",
     "check:types": "tsc --noEmit",
-    "check:publint": "publint run --strict"
+    "check:publint": "pnpm build && publint run --strict"
   },
   "dependencies": {
     "@noble/hashes": "^1.4.0",
