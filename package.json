@@ -1,6 +1,6 @@
 {
   "name": "saidify",
-  "version": "0.0.0-dripip",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/kentbull/saidify.git"
@@ -62,7 +62,6 @@
     "@typescript-eslint/eslint-plugin": "8.1.0",
     "@typescript-eslint/parser": "8.1.0",
     "@vitest/coverage-v8": "^2.0.5",
-    "dripip": "0.10.0",
     "eslint": "8.57.0",
     "eslint-plugin-only-warn": "1.1.0",
     "eslint-plugin-tsdoc": "0.3.0",
