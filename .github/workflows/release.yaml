@@ -29,5 +29,5 @@ jobs:
             echo "Release tag must be semver, got: $GITHUB_REF_NAME" >&2
             exit 1
           fi
-          npm version "$version" --no-git-tag-version
+          npm version "$version" --no-git-tag-version --allow-same-version
       - run: npm publish
