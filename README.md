@@ -35,7 +35,7 @@ expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
 
 // verify self addressing identifier
 const computedSAID = 'ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz'
-const doesVerify = verify(sad, computedSAID, label) // can verify with original myData or sad
+const doesVerify = verify(sad, computedSAID, label) // can verify with original myData SAID or sad
 // ...Vitest test assertion
 expect(doesVerify).toEqual(true)
 ```

@@ -6,7 +6,7 @@
     "url": "git+ssh://git@github.com/kentbull/saidify.git"
   },
   "author": "Kent Bull",
-  "packageManager": "pnpm@8.10.4",
+  "packageManager": "pnpm@11.9.0",
   "license": "Apache-2.0",
   "type": "module",
   "files": [
