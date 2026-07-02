@@ -1,6 +1,1 @@
-export { Sizes } from './lib/code-tables.js'
-export { Sizeage } from './lib/code-tables.js'
-export * from './lib/core.js'
-export { SAIDAlgoCodex } from './lib/digests.js'
-export { SAIDDex } from './lib/digests.js'
-export { Codex } from './lib/digests.js'
+export { saidify, saidifyUrn, verify, verifyUrn } from './lib/core.js'

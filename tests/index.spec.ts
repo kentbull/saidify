@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import * as Lib from './index.js'
-import { SAIDDex, Serials } from './index.js'
+import * as Lib from '../src/index.js'
+import { SAIDDex } from '../src/lib/digests.js'
+
+const URN_SAID_PREFIX = 'urn:said:'
 
 describe('saidify function tests', () => {
   let data: any
   let label: string
   let code: string
-  let kind: Serials
+  let kind: 'JSON'
 
   beforeEach(() => {
     data = {
@@ -16,7 +18,7 @@ describe('saidify function tests', () => {
       attr3: `value3`,
     }
     code = SAIDDex.Blake3_256
-    kind = Serials.JSON
+    kind = 'JSON'
     label = `d`
   })
 
@@ -64,7 +66,7 @@ describe('example code tests', () => {
       d: '',
     }
     const label = 'd'
-    const [said, _sad] = Lib.saidify(data, label, SAIDDex.Blake3_256, Serials.JSON)
+    const [said, _sad] = Lib.saidify(data, label, SAIDDex.Blake3_256, 'JSON')
     expect(said).toEqual('ELLbizIr2FJLHexNkiLZpsTWfhwUmZUicuhmoZ9049Hz')
   })
 })
@@ -113,7 +115,7 @@ describe(`verify function tests`, () => {
     }
     const label = 'd'
     const code = SAIDDex.Blake2b_256
-    const [newSaid, sadData] = Lib.saidify(data, label, code, Serials.JSON)
+    const [newSaid, sadData] = Lib.saidify(data, label, code, 'JSON')
     expect(newSaid).toEqual(keripySAID)
     const doesVerify = Lib.verify(sadData, newSaid, label, code)
     expect(doesVerify).toEqual(true)
@@ -129,7 +131,7 @@ describe(`verify function tests`, () => {
     }
     const label = 'd'
     const code = SAIDDex.SHA2_256
-    const [newSaid, sadData] = Lib.saidify(data, label, code, Serials.JSON)
+    const [newSaid, sadData] = Lib.saidify(data, label, code, 'JSON')
     expect(newSaid).toEqual(keripySAID)
     const doesVerify = Lib.verify(sadData, newSaid, label, code)
     expect(doesVerify).toEqual(true)
@@ -145,7 +147,7 @@ describe(`verify function tests`, () => {
     }
     const label = 'd'
     const code = SAIDDex.SHA3_256
-    const [newSaid, sadData] = Lib.saidify(data, label, code, Serials.JSON)
+    const [newSaid, sadData] = Lib.saidify(data, label, code, 'JSON')
     expect(newSaid).toEqual(keripySAID)
     const doesVerify = Lib.verify(sadData, newSaid, label, code)
     expect(doesVerify).toEqual(true)
@@ -156,9 +158,9 @@ describe(`urn:said saidifier tests`, () => {
   it(`embeds a urn:said-prefixed identifier and preserves the field length`, () => {
     const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
     const [said, sad] = Lib.saidifyUrn(data, `id`)
-    expect(said.startsWith(Lib.URN_SAID_PREFIX)).toEqual(true)
+    expect(said.startsWith(URN_SAID_PREFIX)).toEqual(true)
     // 'urn:said:' (9 chars) + 44-char SAID = 53 chars, before and after replacement
-    expect(sad[`id`].length).toEqual(Lib.URN_SAID_PREFIX.length + 44)
+    expect(sad[`id`].length).toEqual(URN_SAID_PREFIX.length + 44)
     expect(sad[`id`]).toEqual(said)
   })
 
@@ -173,7 +175,7 @@ describe(`urn:said saidifier tests`, () => {
     const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
     const [urnSaid] = Lib.saidifyUrn({ ...data }, `id`)
     const [bareSaid] = Lib.saidify({ ...data }, `id`)
-    expect(urnSaid).not.toEqual(Lib.URN_SAID_PREFIX + bareSaid)
+    expect(urnSaid).not.toEqual(URN_SAID_PREFIX + bareSaid)
   })
 
   it(`fails plain verification when the urn prefix is not accounted for`, () => {
@@ -185,7 +187,7 @@ describe(`urn:said saidifier tests`, () => {
   it(`supports an explicit prefix argument equivalently to saidifyUrn`, () => {
     const data = { id: ``, first: `Sue`, last: `Smith`, role: `Founder` }
     const [viaWrapper] = Lib.saidifyUrn({ ...data }, `id`)
-    const [viaArg] = Lib.saidify({ ...data }, `id`, SAIDDex.Blake3_256, Serials.JSON, Lib.URN_SAID_PREFIX)
+    const [viaArg] = Lib.saidify({ ...data }, `id`, SAIDDex.Blake3_256, 'JSON', URN_SAID_PREFIX)
     expect(viaArg).toEqual(viaWrapper)
   })
 })

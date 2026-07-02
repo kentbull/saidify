@@ -1,7 +1,7 @@
-closes #...
+Closes #...
 
-#### TASKS
+## Checklist
 
-- [ ] Out of band docs (website, README, ...)
-- [ ] In of band docs (jsdoc)
+- [ ] README or external docs updated, if needed
+- [ ] JSDoc updated, if needed
 - [ ] Tests

@@ -6,22 +6,7 @@ import { Dict } from './data-structures.js'
 import { DigestAlgoMap, SAIDDex } from './digests.js'
 import { fromBytes, toBytes } from './encoding.js'
 
-/**
- * Serialization types for the version field 'v'
- */
-export enum Serials {
-  JSON = `JSON`,
-  CBOR = `CBOR`,
-  MGPK = `MGPK`,
-}
-
-/**
- * Protocol types for the version field 'v'
- */
-export enum Protocols {
-  KERI = `KERI`,
-  ACDC = `ACDC`,
-}
+type SerialKind = 'JSON' | 'CBOR' | 'MGPK'
 
 /**
  * Utility function to handle serialization by kind
@@ -29,13 +14,13 @@ export enum Protocols {
  * @param kind - type of serialization to create
  * returns raw bytes of the serialized version of the data Object
  */
-export function dumpBytes(data: Object, kind: Serials): Uint8Array {
+function dumpBytes(data: Object, kind: SerialKind): Uint8Array {
   switch (kind) {
-    case Serials.JSON:
+    case 'JSON':
       return toBytes(JSON.stringify(data))
-    case Serials.CBOR:
+    case 'CBOR':
       return cbor.encode(data)
-    case Serials.MGPK:
+    case 'MGPK':
       const encoder = msgpack5()
       return encoder.encode(data).slice()
     default:
@@ -46,20 +31,20 @@ export function dumpBytes(data: Object, kind: Serials): Uint8Array {
 /**
  * Character used to pad SAID values prior to calculation of the digest.
  */
-export const SAID_PAD_CHARACTER = `#`
+const SAID_PAD_CHARACTER = `#`
 
 /**
  * Prefix for URN-based SAIDs.
  * Prepended to the `#` placeholder before the digest is calculated (pre-processing) for size-sensitive serializations.
  */
-export const URN_SAID_PREFIX = `urn:said:`
+const URN_SAID_PREFIX = `urn:said:`
 
 /**
  * Serialize data with serialization kind if provided otherwise JSON by default
  * @param data - data to serialize
  * @param kind - serialization kind, defaults to JSON
  */
-export function serialize(data: Dict<any>, kind: Serials = Serials.JSON): Uint8Array {
+function serialize(data: Dict<any>, kind: SerialKind = 'JSON'): Uint8Array {
   return dumpBytes(data, kind)
 }
 
@@ -86,10 +71,10 @@ export function serialize(data: Dict<any>, kind: Serials = Serials.JSON): Uint8A
  * @param label - name of the property in the "data" field that will have the SAID placed inside
  * @param prefix - Prepends `urn:said:` to the placeholder before hashing.
  */
-export function deriveSAIDBytes(
+function deriveSAIDBytes(
   data: Dict<any>,
   code: string = SAIDDex.Blake3_256,
-  kind: Serials = Serials.JSON,
+  kind: SerialKind = 'JSON',
   label: string = `d`,
   prefix: string = ``,
 ): [Uint8Array, Dict<any>] {
@@ -125,7 +110,7 @@ export function deriveSAIDBytes(
  * @param raw - the raw bytes to encode
  * @param code - the algorithm derivation code to use
  */
-export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256): Uint8Array {
+function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256): Uint8Array {
   const sizeage = Sizes.get(code)
   if (sizeage === undefined) {
     throw new Error(`Unsupported digest algorithm code = ${code}`)
@@ -165,7 +150,7 @@ export function qb64b(raw: Uint8Array, code: string = SAIDDex.Blake3_256): Uint8
  * @param raw - the raw bytes to encode
  * @param code - the algorithm derivation code to use
  */
-export function qb64(raw: Uint8Array, code: string = SAIDDex.Blake3_256): string {
+function qb64(raw: Uint8Array, code: string = SAIDDex.Blake3_256): string {
   return fromBytes(qb64b(raw, code))
 }
 
@@ -175,7 +160,7 @@ export function qb64(raw: Uint8Array, code: string = SAIDDex.Blake3_256): string
  *
  * @param code - the algorithm derivation code to calculate the raw size for
  */
-export function rawSize(code: string = SAIDDex.Blake3_256): number {
+function rawSize(code: string = SAIDDex.Blake3_256): number {
   if (code.length === 0) {
     throw new Error('Invalid code, cannot calculate size.')
   }
@@ -204,7 +189,7 @@ export function rawSize(code: string = SAIDDex.Blake3_256): number {
  * @param raw - raw bytes to check
  * @param code - derivation code algorithm to check the size against
  */
-export function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_256) {
+function validateRawSize(raw: Uint8Array, code: string = SAIDDex.Blake3_256) {
   const rize = rawSize(code)
   raw = raw.slice(0, rize)
   if (raw.length != rize) {
@@ -247,7 +232,7 @@ export function saidify(
   data: Dict<any>,
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
-  kind: Serials = Serials.JSON,
+  kind: SerialKind = 'JSON',
   prefix: string = ``,
 ): [string, Dict<any>] {
   const [raw, sad] = deriveSAIDBytes(data, code, kind, label, prefix)
@@ -286,7 +271,7 @@ export function saidifyUrn(
   data: Dict<any>,
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
-  kind: Serials = Serials.JSON,
+  kind: SerialKind = 'JSON',
 ): [string, Dict<any>] {
   return saidify(data, label, code, kind, URN_SAID_PREFIX)
 }
@@ -320,8 +305,6 @@ export function saidifyUrn(
  * @param said - The SAID to verify against. Defaults to the 'label' field of the 'sad' param.
  * @param code - The derivation code specifying which algorithm to use. Defaults to Blake3-256.
  * @param kind - The serialization kind to use. Defaults to JSON.
- * @param prefixed - Whether to verify the embedded SAID in the data structure against the computed qb64.
- * @param versioned - Whether to verify the version field in the data structure against the derived version field.
  * @param prefix - Prepends `urn:said:` to the placeholder before hashing.
  */
 export function verify(
@@ -329,7 +312,7 @@ export function verify(
   said?: string,
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
-  kind: Serials = Serials.JSON,
+  kind: SerialKind = 'JSON',
   prefix: string = ``,
 ): boolean {
   if (sad[label] === undefined) {
@@ -365,7 +348,7 @@ export function verifyUrn(
   said?: string,
   label: string = 'd',
   code: string = SAIDDex.Blake3_256,
-  kind: Serials = Serials.JSON,
+  kind: SerialKind = 'JSON',
 ): boolean {
   return verify(sad, said, label, code, kind, URN_SAID_PREFIX)
 }

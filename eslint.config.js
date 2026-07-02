@@ -1,14 +1,12 @@
 import tsEslintPlugin from '@typescript-eslint/eslint-plugin'
 import tsEslintParser from '@typescript-eslint/parser'
 import tsdoc from 'eslint-plugin-tsdoc'
-// @ts-expect-error
-import onlyWarn from 'eslint-plugin-only-warn'
 
 export default [
   {
     files: ['**/*.ts'],
     ignores: ['build/**/*', 'eslint.config.js', 'vitest.config.ts'],
-    plugins: { tsdoc: tsdoc, 'only-warn': onlyWarn, '@typescript-eslint': tsEslintPlugin },
+    plugins: { tsdoc: tsdoc, '@typescript-eslint': tsEslintPlugin },
     rules: {
       // '@typescript-eslint/consistent-type-imports': 'warn',
       // Note you must disable the base rule as it can report incorrect errors.

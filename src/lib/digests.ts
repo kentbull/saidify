@@ -6,7 +6,7 @@ import { sha3_256 } from '@noble/hashes/sha3'
 /**
  * A base class for lists of things
  */
-export class Codex {
+class Codex {
   /**
    * Check if a codex entry exists by checking both keys and values.
    * @param prop - The property to check for existence.
@@ -22,7 +22,7 @@ export class Codex {
 /**
  * A list of supported algorithms for deriving self-addressing identifiers.
  */
-export class SAIDAlgoCodex extends Codex {
+class SAIDAlgoCodex extends Codex {
   Blake3_256: string = 'E' // Blake3 256 bit digest self-addressing derivation.
   Blake2b_256: string = 'F' // Blake2b 256 bit digest self-addressing derivation.
   SHA2_256: string = 'I' // SHA2 256 bit digest self-addressing derivation.

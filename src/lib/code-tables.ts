@@ -5,7 +5,7 @@
  * - The fully qualified Base64 form (qb64)
  * - The fully qualified Base2 (binary - qb2) form
  */
-export interface CodeCounts {
+interface CodeCounts {
   /**
    * Hard Size (hs) - character count of fixed part of code size
    */
@@ -31,7 +31,7 @@ export interface CodeCounts {
 /**
  * An entry in the sizes table describing derivation code character and byte counts.
  */
-export class Sizeage implements CodeCounts {
+class Sizeage implements CodeCounts {
   constructor(
     public hs: number,
     public ss: number,
